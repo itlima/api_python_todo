@@ -15,34 +15,47 @@ db = client["mydatabase"]
 collection: Collection = db["mycollection"]
 
 
-def get_last_numeric():
-    last_item = collection.find_one(sort=[("numeric", -1)])
-    new_numeric = 1 if last_item is None else int(last_item["numeric"]) + 1
-    return new_numeric
+def get_last_numeric() -> int:
+    try:
+        last_item = collection.find_one(
+            sort=[("numeric", -1)]
+        )
+        return 1 if last_item is None else int(last_item["numeric"]) + 1
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error fetching last numeric value: {str(e)}")
 
 
-def read_file(path):
-    with open(path) as json_data:
-        content_file = json.load(json_data)
-    return content_file
+def read_json_file(path: str) -> dict:
+    try:
+        with open(path) as json_data:
+            return json.load(json_data)
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=404,
+            detail="File not found.")
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=400,
+            detail="Error decoding JSON.")
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error reading file: {str(e)}")
 
 
-@app.post("/migrate")
-def migrate_todos():
-
-    todos_to_import = read_file('database.json')
-
+def prepare_todo_import(todos: dict, start_numeric: int) -> list:
     todo_prepared_to_import = []
+    numeric = start_numeric
 
-    numeric = get_last_numeric()
-    for todo in todos_to_import:
-        data_prepared = {
+    for todo in todos.values():
+        todo_prepared_to_import.append({
             "numeric": numeric,
-            "task_message": todos_to_import[todo]
-        }
+            "task_message": todo
+        })
         numeric += 1
 
-        todo_prepared_to_import.append(data_prepared)
+    return todo_prepared_to_import
 
     collection.insert_many(todo_prepared_to_import)
     total_lines = len(todo_prepared_to_import)
