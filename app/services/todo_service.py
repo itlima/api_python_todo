@@ -1,20 +1,15 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import Request, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pymongo.collection import Collection
-from pymongo import MongoClient
-import json
+from app.db.connection import db
+from app.utils.common import read_json_file
 
-
-app = FastAPI()
 templates = Jinja2Templates(directory="templates")
-
-client = MongoClient("mongodb://admin:admin_password@localhost:27017")
-db = client["mydatabase"]
 collection: Collection = db["mycollection"]
 
 
-def get_last_numeric() -> int:
+def fetch_next_numeric_value() -> int:
     try:
         last_item = collection.find_one(
             sort=[("numeric", -1)]
@@ -22,34 +17,17 @@ def get_last_numeric() -> int:
         return 1 if last_item is None else int(last_item["numeric"]) + 1
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail=f"Error fetching last numeric value: {str(e)}")
-
-
-def read_json_file(path: str) -> dict:
-    try:
-        with open(path) as json_data:
-            return json.load(json_data)
-    except FileNotFoundError:
-        raise HTTPException(
-            status_code=404,
-            detail="File not found.")
-    except json.JSONDecodeError:
-        raise HTTPException(
-            status_code=400,
-            detail="Error decoding JSON.")
-    except Exception as e:
-        raise HTTPException(
             status_code=500,
-            detail=f"Error reading file: {str(e)}")
+            detail=f"Error fetching last numeric value: {str(e)}")
 
 
-def prepare_todo_import(todos: dict, start_numeric: int) -> list:
+def format_todos_for_import(todos: dict, start_numeric: int) -> list:
     todo_prepared_to_import = []
     numeric = start_numeric
 
     for todo in todos.values():
         todo_prepared_to_import.append({
-            "numeric": numeric,
+            "numeric": int(numeric),
             "task_message": todo
         })
         numeric += 1
@@ -57,12 +35,11 @@ def prepare_todo_import(todos: dict, start_numeric: int) -> list:
     return todo_prepared_to_import
 
 
-@app.post("/migrate")
-def migrate_todos():
+async def import_todos():
     todos_to_import = read_json_file('database.json')
-    start_numeric = get_last_numeric()
+    start_numeric = fetch_next_numeric_value()
 
-    todo_prepared_to_import = prepare_todo_import(
+    todo_prepared_to_import = format_todos_for_import(
         todos_to_import, start_numeric)
 
     try:
@@ -74,8 +51,7 @@ def migrate_todos():
     return RedirectResponse("/", 303)
 
 
-@app.get("/")
-async def root(request: Request):
+async def display_todo_list(request: Request):
     try:
         all_todos = list(collection.find())
     except Exception as e:
@@ -90,8 +66,7 @@ async def root(request: Request):
     return templates.TemplateResponse("todolist.html", {"request": request, "tododict": response})
 
 
-@app.get("/delete/{id}")
-async def delete_todo(request: Request, id: str):
+async def remove_todo(id: str):
     try:
         result = collection.delete_one({"numeric": int(id)})
         if result.deleted_count == 0:
@@ -106,8 +81,7 @@ async def delete_todo(request: Request, id: str):
     return RedirectResponse("/", 303)
 
 
-@app.post("/add")
-async def add_todo(request: Request):
+async def create_todo(request: Request):
     try:
         form_data = await request.form()
         task_message = form_data.get("newtodo")
@@ -115,9 +89,9 @@ async def add_todo(request: Request):
             raise HTTPException(
                 status_code=400, detail="Task message is required.")
 
-        numeric = get_last_numeric()
+        numeric = fetch_next_numeric_value()
         new_document = {
-            "numeric": str(numeric),
+            "numeric": int(numeric),
             "task_message": task_message
         }
 
