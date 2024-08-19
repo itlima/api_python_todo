@@ -57,8 +57,21 @@ def prepare_todo_import(todos: dict, start_numeric: int) -> list:
 
     return todo_prepared_to_import
 
-    collection.insert_many(todo_prepared_to_import)
-    total_lines = len(todo_prepared_to_import)
+
+@app.post("/migrate")
+def migrate_todos():
+    todos_to_import = read_json_file('database.json')
+    start_numeric = get_last_numeric()
+
+    todo_prepared_to_import = prepare_todo_import(
+        todos_to_import, start_numeric)
+
+    try:
+        collection.insert_many(todo_prepared_to_import)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error inserting documents: {str(e)}")
+
     return RedirectResponse("/", 303)
 
 
