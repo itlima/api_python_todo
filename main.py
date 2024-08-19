@@ -93,15 +93,16 @@ async def root(request: Request):
 
 @app.get("/delete/{id}")
 async def delete_todo(request: Request, id: str):
-    print(id)
-
-    result = collection.delete_one({"numeric": int(id)})
-
-    collection.delete_one(
-        {
-            "numeric": id,
-        }
-    )
+    try:
+        result = collection.delete_one({"numeric": int(id)})
+        if result.deleted_count == 0:
+            raise HTTPException(
+                status_code=404, detail=f"No document found with numeric value {id}.")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid numeric value.")
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error deleting document: {str(e)}")
 
     return RedirectResponse("/", 303)
 
