@@ -77,12 +77,15 @@ def migrate_todos():
 
 @app.get("/")
 async def root(request: Request):
+    try:
+        all_todos = list(collection.find())
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error fetching todos: {str(e)}")
 
-    all_todos = collection.find()
-    result_list = list(all_todos)
     response = {
-        'content': result_list,
-        'size': len(result_list),
+        'content': all_todos,
+        'size': len(all_todos),
     }
 
     return templates.TemplateResponse("todolist.html", {"request": request, "tododict": response})
