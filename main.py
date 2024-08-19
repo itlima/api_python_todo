@@ -48,33 +48,44 @@ def migrate_todos():
     total_lines = len(todo_prepared_to_import)
     return RedirectResponse("/", 303)
 
+
 @app.get("/")
 async def root(request: Request):
-    with open('database.json') as f:
-        data = json.load(f)
-    return templates.TemplateResponse("todolist.html",{"request":request,"tododict":data})
+
+    all_todos = collection.find()
+    result_list = list(all_todos)
+    response = {
+        'content': result_list,
+        'size': len(result_list),
+    }
+
+    return templates.TemplateResponse("todolist.html", {"request": request, "tododict": response})
+
 
 @app.get("/delete/{id}")
 async def delete_todo(request: Request, id: str):
-    with open('database.json') as f:
-        data = json.load(f)
-    del data[id]
-    with open('database.json','w') as f:
-        json.dump(data,f)
+    print(id)
+
+    result = collection.delete_one({"numeric": int(id)})
+
+    collection.delete_one(
+        {
+            "numeric": id,
+        }
+    )
+
     return RedirectResponse("/", 303)
+
 
 @app.post("/add")
 async def add_todo(request: Request):
-    with open('database.json') as f:
-        data = json.load(f)
-    formdata = await request.form()
-    newdata = {}
-    i=1
-    for id in data:
-        newdata[str(i)] = data[id]
-        i+=1
-    newdata[str(i)] = formdata["newtodo"]
-    print(newdata)
-    with open('database.json','w') as f:
-        json.dump(newdata,f)
+    teste = await request.form()
+
+    numeric = get_last_numeric()
+    new_document = {
+        "numeric": str(numeric),
+        "task_message": teste["newtodo"]
+    }
+    collection.insert_one(new_document)
+
     return RedirectResponse("/", 303)
