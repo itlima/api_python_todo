@@ -34,16 +34,29 @@
         td:nth-child(2) {
             text-align: center;
         }
+
     </style>
     <body>
         <h1>My TO DO list</h1>
         <br/>
-        
+        <div class="center">
+ 
+        </div>
         <table>
             <tr>
                 <th>ToDo</th>
                 <th>Options</th>
-
+            </tr>
+            
+            <tr>
+                <td>
+                    Migrate ToDos:
+                </td>
+                <td>
+                    <form action="/migrate" method="POST" onsubmit="return confirm('Are you sure you want to migrate?');">
+                        <button type="submit">Migrate</button>
+                    </form>
+                </td>
             </tr>
 
             <tr>
@@ -63,9 +76,7 @@
         
         <h3>Total Results {{ tododict.size }}</h3>
         
-        <form action="/migrate" method="POST" onsubmit="return confirm('Are you sure you want to migrate?');">
-            <button type="submit">Migrate</button>
-        </form>
+
         
         
     </body>

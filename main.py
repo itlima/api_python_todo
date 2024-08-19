@@ -1,10 +1,9 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-import json
-
 from pymongo.collection import Collection
 from pymongo import MongoClient
+import json
 
 
 app = FastAPI()
