@@ -109,13 +109,22 @@ async def delete_todo(request: Request, id: str):
 
 @app.post("/add")
 async def add_todo(request: Request):
-    teste = await request.form()
+    try:
+        form_data = await request.form()
+        task_message = form_data.get("newtodo")
+        if not task_message:
+            raise HTTPException(
+                status_code=400, detail="Task message is required.")
 
-    numeric = get_last_numeric()
-    new_document = {
-        "numeric": str(numeric),
-        "task_message": teste["newtodo"]
-    }
-    collection.insert_one(new_document)
+        numeric = get_last_numeric()
+        new_document = {
+            "numeric": str(numeric),
+            "task_message": task_message
+        }
+
+        collection.insert_one(new_document)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error adding new todo: {str(e)}")
 
     return RedirectResponse("/", 303)
