@@ -18,6 +18,13 @@
             margin-right: auto;
             font-size: 50px;
         }
+        h3 {
+            width: fit-content;
+            font-family: 'Courier New', Courier, monospace;
+            margin-left: auto;
+            margin-right: auto;
+            font-size: 25px;
+        }
         th,td {
             width: 500px;
             justify-content: center;
@@ -31,23 +38,35 @@
     <body>
         <h1>My TO DO list</h1>
         <br/>
+        
         <table>
             <tr>
                 <th>ToDo</th>
                 <th>Options</th>
+
             </tr>
+
             <tr>
                 <form method="POST" action="/add">
                     <td><input type="text" name="newtodo" required></td>
                     <td style="text-align: center;"><button type="submit">Add New</button></td>
                 </form>
             </tr>
-            {% for id in tododict %}
+            {% for item in tododict.content %}
                 <tr>
-                <td>{{ tododict[id] }}</td>
-                <td><a href="/delete/{{ id }}"><button>Delete</button></a></td>
+                <td>{{ item.numeric }}: {{ item.task_message }}</td>
+                <td><a href="/delete/{{ item.numeric }}"><button>Delete</button></a></td>
             </tr>
             {% endfor %}
+            
         </table>
+        
+        <h3>Total Results {{ tododict.size }}</h3>
+        
+        <form action="/migrate" method="POST" onsubmit="return confirm('Are you sure you want to migrate?');">
+            <button type="submit">Migrate</button>
+        </form>
+        
+        
     </body>
 </html>
