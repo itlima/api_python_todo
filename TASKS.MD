@@ -124,8 +124,12 @@
     - [x] Create module for code reuse (common)
 - [x]  Create Docker file to create API image
 - [x]  Add API image in Docker compose
+- [ ]   Create functionality to update to do
+  - [ ] Create Endpoint to update ToDo
+  - [ ] Add in todolist.html this new endpoint
 
+# ROADMAP
+- [ ]  Create integration tests to ensure E2E functionality
+- [ ]  Create unit tests for common utils and features in todo_service
+- [ ]  Generate make file to facilitate the project building process
 
-ROADMAP
-- [] Create integration tests to ensure E2E functionality
-- [] Create unit tests for common utils and features in todo_service

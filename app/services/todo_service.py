@@ -101,3 +101,16 @@ async def create_todo(request: Request):
             status_code=500, detail=f"Error adding new todo: {str(e)}")
 
     return RedirectResponse("/", 303)
+
+
+async def update_todo(numeric, content):
+
+    result = collection.update_one({"numeric": int(id)})
+
+    collection.update_one(
+        {"numeric": numeric},
+        {"$set": {"task_message": content}}
+    )
+    print(result)
+
+    return RedirectResponse("/", 303)
